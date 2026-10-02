@@ -10,18 +10,18 @@ from data.database import get_db
 router = APIRouter()
 
 
-@router.get("/folders", response_model=List[schema.FolderResponse])
+@router.get("/folders", status_code=200, response_model=List[schema.FolderResponse])
 async def get_folders(parent_id: Optional[int] = None, db: AsyncSession = Depends(get_db)):
     if parent_id is None:
-        query = select(model.Folder).filter(model.Folder.parent_id.is_(None))
+        query = select(model.Folder).where(model.Folder.parent_id.is_(None))
     else:
-        query = select(model.Folder).filter(model.Folder.parent_id == parent_id)
+        query = select(model.Folder).where(model.Folder.parent_id == parent_id)
 
     results = await db.execute(query)
     return results.scalars().all()
 
 
-@router.post("/folders", response_model=schema.FolderResponse)
+@router.post("/folders", status_code=201, response_model=schema.FolderResponse)
 async def create_folder(folder: schema.FolderCreate, db: AsyncSession = Depends(get_db)):
     db_folder = model.Folder(name=folder.name, parent_id=folder.parent_id)  # type: ignore
     db.add(db_folder)
@@ -30,9 +30,9 @@ async def create_folder(folder: schema.FolderCreate, db: AsyncSession = Depends(
     return db_folder
 
 
-@router.delete("/folders/{folder_id}")
+@router.delete("/folders/{folder_id}", status_code=204)
 async def delete_folder(folder_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(model.Folder).filter(model.Folder.id == folder_id))
+    result = await db.execute(select(model.Folder).where(model.Folder.id == folder_id))
     db_folder = result.scalars().first()
 
     if not db_folder:
