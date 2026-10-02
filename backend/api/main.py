@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers.folder import router as folder_router
-from routers.file import router as file_router
+from backend.api.routers.folder import router as folder_router
+from backend.api.routers.file import router as file_router
 
 
 app = FastAPI(

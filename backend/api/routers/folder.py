@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from ...data import model, schema
-from ...data.database import get_db
+from backend.data import model, schema
+from backend.data.database import get_db
 
 
 router = APIRouter()
@@ -10,7 +10,7 @@ router = APIRouter()
 
 @router.post("/folders", response_model=schema.FolderResponse)
 async def create_folder(folder: schema.FolderCreate, db: AsyncSession = Depends(get_db)):
-    db_folder = model.Folder(name=folder.name, parent_id=folder.parent_id)
+    db_folder = model.Folder(name=folder.name, parent_id=folder.parent_id)  # type: ignore
     db.add(db_folder)
     await db.commit()
     await db.refresh(db_folder)
