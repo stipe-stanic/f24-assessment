@@ -1,11 +1,24 @@
+from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
 from backend.data import model, schema
 from backend.data.database import get_db
 
 
 router = APIRouter()
+
+
+@router.get("/folders", response_model=List[schema.FolderResponse])
+async def get_folders(parent_id: Optional[int] = None, db: AsyncSession = Depends(get_db)):
+    if parent_id is None:
+        query = select(model.Folder).filter(model.Folder.parent_id.is_(None))
+    else:
+        query = select(model.Folder).filter(model.Folder.parent_id == parent_id)
+
+    results = await db.execute(query)
+    return results.scalars().all()
 
 
 @router.post("/folders", response_model=schema.FolderResponse)

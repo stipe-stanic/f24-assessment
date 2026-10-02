@@ -3,7 +3,7 @@ from sqlalchemy.orm import DeclarativeBase
 
 
 SQLALCHEMY_DATABASE_URL = (
-    "postgresql+asyncpg://postgres:mysecretpassword@localhost:5432/filesystem_db"
+    "postgresql+asyncpg://postgres:postgres@localhost:5432/filesystem_db"
 )
 
 engine = create_async_engine(

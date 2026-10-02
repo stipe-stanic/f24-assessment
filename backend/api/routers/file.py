@@ -2,11 +2,22 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional, List
+
 from backend.data import model, schema
 from backend.data.database import get_db
 
 
 router = APIRouter()
+
+
+@router.get("/files", response_model=List[schema.FileResponse])
+async def get_files(folder_id: Optional[int] = None, db: AsyncSession = Depends(get_db)):
+    if folder_id is None:
+        return []
+
+    query = select(model.File).filter(model.File.folder_id == folder_id)
+    result = await db.execute(query)
+    return result.scalars().all()
 
 
 @router.post("/files", response_model=schema.FileResponse)
