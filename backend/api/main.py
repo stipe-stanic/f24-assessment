@@ -2,9 +2,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.data.database import engine, Base
-from backend.api.routers.folder import router as folder_router
-from backend.api.routers.file import router as file_router
+from data.database import engine, Base
+from api.routers.folder import router as folder_router
+from api.routers.file import router as file_router
 
 
 @asynccontextmanager

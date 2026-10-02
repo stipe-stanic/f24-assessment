@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
-from backend.data.database import Base
+from data.database import Base
 
 
 class Folder(Base):
