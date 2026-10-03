@@ -18,6 +18,7 @@ from api.routers.file import router as file_router
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger("sqlalchemy.engine").propagate = False
 logger = logging.getLogger(__name__)
 
 
@@ -55,7 +56,10 @@ app = FastAPI(
     version="1.0.0",
 )
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+
+if not FRONTEND_URL:
+    raise RuntimeError("FRONTEND_URL environment variable is missing")
 
 app.add_middleware(
     CORSMiddleware,
