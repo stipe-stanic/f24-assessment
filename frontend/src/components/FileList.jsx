@@ -5,7 +5,7 @@ export default function FileList({ folders, files, onNavigate, onDelete }) {
         <div style={{ marginTop: '20px' }}>
             <ul style={{ listStyle: 'none', padding: 0 }}>
                 {folders.map(folder => (
-                    <li key={folder.id} style={{ margin: '10px 0' }}>
+                    <li key={`folder-${folder.id}`} style={{ margin: '10px 0' }}>
                         <span
                             onClick={() => onNavigate(folder.id)}
                             style={{ cursor: 'pointer', fontWeight: 'bold', marginRight: '15px' }}
@@ -17,7 +17,7 @@ export default function FileList({ folders, files, onNavigate, onDelete }) {
                 ))}
 
                 {files.map(file => (
-                    <li key={file.id} style={{ margin: '10px 0' }}>
+                    <li key={`file-${file.id}`} style={{ margin: '10px 0' }}>
                         <span style={{ marginRight: '15px' }}>📄 {file.name}</span>
                         <button onClick={() => onDelete('file', file.id)}>Delete</button>
                     </li>

@@ -6,44 +6,79 @@ export default function SearchBar({ currentFolderId }) {
     const [mode, setMode] = useState('search_all'); // 'search_all' | 'search_folder'
     const [results, setResults] = useState([]);
     const [hasSearched, setHasSearched] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
+    const [error, setError] = useState(null);
 
     // Reset state when switching search modes
     const handleModeChange = (newMode) => {
         setMode(newMode);
         setResults([]);
         setHasSearched(false);
+        setError(null);
     };
 
-    const executeSearch = async (searchQuery) => {
-        if (searchQuery.trim().length < 2) {
+    // Prevent page reload when user presses Enter inside the form
+    const handleSubmit = (e) => {
+        e.preventDefault();
+    };
+
+    // Debounced search with AbortController for race condition protection
+    useEffect(() => {
+        const controller = new AbortController();
+        const trimmedQuery = query.trim();
+
+        if (trimmedQuery.length < 2) {
             setResults([]);
             setHasSearched(false);
+            setIsSearching(false);
+            setError(null);
             return;
         }
 
-        try {
-            let response;
-            if (mode === 'search_folder') {
-                response = await searchFolderFile(searchQuery, currentFolderId);
-            } else {
-                response = await searchFiles(searchQuery);
-            }
-            setResults(response.data || []);
-            setHasSearched(true); // Mark search as completed
-        } catch (error) {
-            console.error("File search failed", error);
+        // Handle searching within a folder while at root level
+        if (mode === 'search_folder' && currentFolderId === null) {
             setResults([]);
-            setHasSearched(true);
+            setHasSearched(false);
+            setIsSearching(false);
+            setError("Select a specific folder to perform a folder search.");
+            return;
         }
-    };
 
-    // Debounced automatic search on typing
-    useEffect(() => {
-        const delayDebounceFn = setTimeout(() => {
-            executeSearch(query);
+        setIsSearching(true);
+        setError(null);
+
+        const delayDebounceFn = setTimeout(async () => {
+            try {
+                let response;
+                const options = { signal: controller.signal };
+
+                if (mode === 'search_folder') {
+                    response = await searchFolderFile(trimmedQuery, currentFolderId, options);
+                } else {
+                    response = await searchFiles(trimmedQuery, options);
+                }
+
+                setResults(response.data || []);
+                setHasSearched(true);
+            } catch (err) {
+                // Ignore errors caused by explicit request cancellation
+                if (err.name === 'CanceledError' || err.name === 'AbortError') return;
+
+                console.error("File search failed", err);
+                setError(err.message || "Search failed. Please try again.");
+                setResults([]);
+                setHasSearched(false);
+            } finally {
+                if (!controller.signal.aborted) {
+                    setIsSearching(false);
+                }
+            }
         }, 300);
 
-        return () => clearTimeout(delayDebounceFn);
+        return () => {
+            clearTimeout(delayDebounceFn);
+            controller.abort(); // Cancel pending network request if query, mode, or folder changes
+        };
     }, [query, mode, currentFolderId]);
 
     return (
@@ -71,7 +106,7 @@ export default function SearchBar({ currentFolderId }) {
                 </label>
             </div>
 
-            <form style={{ display: 'flex', gap: '8px' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '8px' }}>
                 <input
                     type="text"
                     placeholder={mode === 'search_all' ? "Type to search..." : "Type folder filename..."}
@@ -81,18 +116,31 @@ export default function SearchBar({ currentFolderId }) {
                 />
             </form>
 
+            {/* Loading Indicator */}
+            {isSearching && (
+                <p style={{ color: '#666', fontSize: '14px', marginTop: '8px' }}>Searching...</p>
+            )}
+
+            {/* Error Message */}
+            {error && (
+                <p style={{ color: '#dc2626', fontSize: '14px', marginTop: '8px' }}>
+                    {error}
+                </p>
+            )}
+
             {/* Search Results Dropdown */}
-            {results.length > 0 && (
+            {!isSearching && !error && results.length > 0 && (
                 <ul style={{ border: '1px solid #ccc', listStyle: 'none', padding: '10px', width: '320px', marginTop: '8px' }}>
                     {results.map(file => (
-                        <li key={file.id} style={{ marginBottom: '5px' }}>
-                            📄 {file.name} <small style={{ color: '#666' }}>(Folder: {file.folder_id})</small>
+                        <li key={`search-file-${file.id}`} style={{ marginBottom: '5px' }}>
+                            📄 {file.name} <small style={{ color: '#666' }}>(Folder: {file.folder_id ?? 'Root'})</small>
                         </li>
                     ))}
                 </ul>
             )}
 
-            {hasSearched && results.length === 0 && query.trim().length >= 2 && (
+            {/* Empty Results State */}
+            {!isSearching && !error && hasSearched && results.length === 0 && query.trim().length >= 2 && (
                 <p style={{ color: 'gray', fontSize: '14px', marginTop: '8px' }}>
                     No {mode === 'search_folder' ? 'folder' : ''} files found.
                 </p>
