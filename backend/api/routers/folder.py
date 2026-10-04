@@ -32,6 +32,14 @@ async def get_folders(parent_id: Optional[int] = Query(None, ge=1), db: AsyncSes
 
 @router.post("/folders", status_code=status.HTTP_201_CREATED, response_model=schema.FolderResponse)
 async def create_folder(folder: schema.FolderCreate, db: AsyncSession = Depends(get_db)):
+    if folder.parent_id is not None:
+        parent_folder = await db.get(model.Folder, folder.parent_id)
+        if not parent_folder:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Parent folder with ID {folder.parent_id} does not exist."
+            )
+
     db_folder = model.Folder(name=folder.name, parent_id=folder.parent_id)  # type: ignore
     db.add(db_folder)
 
@@ -41,14 +49,6 @@ async def create_folder(folder: schema.FolderCreate, db: AsyncSession = Depends(
         return db_folder
     except IntegrityError as e:
         await db.rollback()
-        err_msg = str(e.orig).lower() if e.orig else ""
-
-        # Foreign Key Constraint Failure (Non-existent parent folder)
-        if "foreign key" in err_msg or "parent'_id" in err_msg:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Parent folder with ID {folder.parent_id} does not exist."
-            )
 
         # Unique Constraint Failure (Duplicate folder name in same parent)
         raise HTTPException(

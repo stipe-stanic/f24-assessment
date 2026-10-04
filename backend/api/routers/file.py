@@ -32,14 +32,6 @@ async def create_file(file: schema.FileCreate, db: AsyncSession = Depends(get_db
         return db_file
     except IntegrityError as e:
         await db.rollback()
-        err_msg = str(e.orig).lower() if e.orig else ""
-
-        # Foreign key constraint failure (Folder does not exist)
-        if "foreign key" in err_msg or "folder_id" in err_msg:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Target folder with ID {file.folder_id} does not exist."
-            )
 
         # Unique constraint failure (Duplicate file name in folder)
         raise HTTPException(
