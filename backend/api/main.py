@@ -18,7 +18,7 @@ from api.routers.file import router as file_router
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
-logging.getLogger("sqlalchemy.engine").propagate = False
+logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 

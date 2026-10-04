@@ -93,7 +93,7 @@ async def delete_file(file_id: int = Path(..., ge=1), db: AsyncSession = Depends
     db_file = result.scalars().first()
 
     if not db_file:
-        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="File with ID {file_id} not found")
+        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="File with ID: {file_id} not found")
 
     await db.delete(db_file)
     await db.commit()

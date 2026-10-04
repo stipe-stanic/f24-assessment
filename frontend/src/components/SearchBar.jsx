@@ -109,7 +109,7 @@ export default function SearchBar({ currentFolderId }) {
             <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '8px' }}>
                 <input
                     type="text"
-                    placeholder={mode === 'search_all' ? "Type to search..." : "Type folder filename..."}
+                    placeholder={"Type to search..."}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     style={{ padding: '8px', width: '250px' }}

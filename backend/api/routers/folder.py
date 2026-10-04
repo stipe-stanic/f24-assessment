@@ -14,6 +14,7 @@ router = APIRouter()
 @router.get("/folders", status_code=status.HTTP_200_OK, response_model=List[schema.FolderResponse])
 async def get_folders(parent_id: Optional[int] = Query(None, ge=1), db: AsyncSession = Depends(get_db)):
     if parent_id is None:
+        # Returns all root level folders
         query = select(model.Folder).where(model.Folder.parent_id.is_(None))
     else:
         query = select(model.Folder).where(model.Folder.parent_id == parent_id)

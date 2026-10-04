@@ -16,7 +16,7 @@ async def test_get_root_folders(client):
 async def test_get_subfolder_contents(client):
     target_folder_id = 1
 
-    folders_response = await client.get("/api/folders", params={"folder_id": target_folder_id})
+    folders_response = await client.get("/api/folders", params={"parent_id": target_folder_id})
     files_response = await client.get("/api/files", params={"folder_id": target_folder_id})
 
     assert folders_response.status_code == 200
@@ -83,7 +83,7 @@ async def test_delete_folder_deletes_all_contents(client):
     assert delete_res.status_code == 204
 
     # Verify the contents under the deleted folder return empty lists
-    folders_in_deleted = await client.get("/api/folders", params={"folder_id": folder_id})
+    folders_in_deleted = await client.get("/api/folders", params={"parent_id": folder_id})
     files_in_deleted = await client.get("/api/files", params={"folder_id": folder_id})
 
     assert folders_in_deleted.status_code == 200

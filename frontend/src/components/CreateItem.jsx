@@ -71,7 +71,6 @@ export default function CreateItem({
                     padding: '8px',
                     marginLeft: '5px',
                     cursor: isFileDisabled ? 'not-allowed' : 'pointer',
-                    opacity: isFileDisabled ? 0.6 : 1
                 }}
             >
                 + File
