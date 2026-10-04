@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { searchFiles, searchFolderFile } from '../services/api';
+import { searchFiles } from '../services/api';
 
 export default function SearchBar({ currentFolderId }) {
     const [query, setQuery] = useState('');
@@ -53,7 +53,7 @@ export default function SearchBar({ currentFolderId }) {
                 const options = { signal: controller.signal };
 
                 if (mode === 'search_folder') {
-                    response = await searchFolderFile(trimmedQuery, currentFolderId, options);
+                    response = await searchFiles(trimmedQuery, currentFolderId, options);
                 } else {
                     response = await searchFiles(trimmedQuery, options);
                 }

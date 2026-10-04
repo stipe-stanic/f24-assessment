@@ -33,7 +33,7 @@ async def test_get_subfolder_contents(client):
 
 async def test_search_files(client):
     # Test searching across all folders
-    search_all_res = await client.get("/api/files/search_all", params={"query": "resume"})
+    search_all_res = await client.get("/api/files/search", params={"query": "resume"})
     assert search_all_res.status_code == 200
 
     files = search_all_res.json()
@@ -42,7 +42,7 @@ async def test_search_files(client):
 
     # Test searching within a specific folder
     search_folder_res = await client.get(
-        "/api/files/search_folder",
+        "/api/files/search",
         params={"query": "resume", "folder_id": 1}
     )
     assert search_folder_res.status_code == 200
@@ -86,8 +86,5 @@ async def test_delete_folder_deletes_all_contents(client):
     folders_in_deleted = await client.get("/api/folders", params={"parent_id": folder_id})
     files_in_deleted = await client.get("/api/files", params={"folder_id": folder_id})
 
-    assert folders_in_deleted.status_code == 200
-    assert files_in_deleted.status_code == 200
-
-    assert folders_in_deleted.json() == []
-    assert files_in_deleted.json() == []
+    assert folders_in_deleted.status_code == 404
+    assert files_in_deleted.status_code == 404

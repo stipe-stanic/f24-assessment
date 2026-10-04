@@ -54,14 +54,8 @@ export const createFile = (name, folderId) =>
 export const deleteFolder = (id) => api.delete(`/folders/${id}`);
 export const deleteFile = (id) => api.delete(`/files/${id}`);
 
-export const searchFolderFile = (query, folderId = null, options = {}) =>
-    api.get('/files/search_folder', {
+export const searchFiles = (query, folderId = null, options = {}) =>
+    api.get('/files/search', {
         params: cleanParams({ query: query?.trim(), folder_id: folderId }),
-        ...options
-    });
-
-export const searchFiles = (query, options = {}) =>
-    api.get('/files/search_all', {
-        params: cleanParams({ query: query?.trim() }),
         ...options
     });

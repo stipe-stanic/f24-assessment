@@ -13,8 +13,17 @@ router = APIRouter()
 
 @router.get("/files", status_code=status.HTTP_200_OK, response_model=List[schema.FileResponse])
 async def get_files(folder_id: Optional[int] = Query(None, ge=1), db: AsyncSession = Depends(get_db)):
+    # Files cannot exist at root level
     if folder_id is None:
         return []
+
+    # Check if folder exists
+    parent_folder = await db.get(model.Folder, folder_id)
+    if parent_folder is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Folder with id {folder_id} not found"
+        )
 
     query = select(model.File).where(model.File.folder_id == folder_id)
     result = await db.execute(query)
@@ -40,41 +49,21 @@ async def create_file(file: schema.FileCreate, db: AsyncSession = Depends(get_db
         )
 
 
-@router.get("/files/search_folder", status_code=status.HTTP_200_OK, response_model=List[schema.FileResponse])
-async def search_folder(
+@router.get("/files/search", status_code=status.HTTP_200_OK, response_model=List[schema.FileResponse])
+async def search_files(
         query: str = Query(..., min_length=1, max_length=255),
         folder_id: Optional[int] = Query(None, ge=1),
         db: AsyncSession = Depends(get_db)
 ):
-    if folder_id is None:
-        return []
-
     # Escape SQL wildcard characters
     query = query.replace("%", r"\%").replace("_", r"\_")
 
-    stmt = (
-        select(model.File)
-        .where(model.File.folder_id == folder_id)
-        .where(model.File.name.ilike(f"{query}%"))
-        .limit(10)
-    )
+    stmt = select(model.File).where(model.File.name.ilike(f"{query}%"))
+    if folder_id is not None:
+        stmt = stmt.where(model.File.folder_id == folder_id)
 
-    result = await db.execute(stmt)
-    return result.scalars().all()
+    stmt = stmt.limit(10)
 
-
-@router.get("/files/search_all", status_code=status.HTTP_200_OK, response_model=List[schema.FileResponse])
-async def search_all(
-        query: str = Query(..., min_length=1, max_length=255),
-        db: AsyncSession = Depends(get_db)
-):
-    if not query:
-        return []
-
-    # Escape SQL wildcard characters
-    query = query.replace("%", r"\%").replace("_", r"\_")
-
-    stmt = select(model.File).where(model.File.name.ilike(f"{query}%")).limit(10)
     result = await db.execute(stmt)
     return result.scalars().all()
 
