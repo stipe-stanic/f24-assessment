@@ -17,6 +17,13 @@ async def get_folders(parent_id: Optional[int] = Query(None, ge=1), db: AsyncSes
         # Returns all root level folders
         query = select(model.Folder).where(model.Folder.parent_id.is_(None))
     else:
+        # Check if parent folder exists
+        parent_folder = await db.get(model.Folder, parent_id)
+        if parent_folder is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Folder with id {parent_id} not found"
+            )
         query = select(model.Folder).where(model.Folder.parent_id == parent_id)
 
     results = await db.execute(query)
@@ -37,7 +44,7 @@ async def create_folder(folder: schema.FolderCreate, db: AsyncSession = Depends(
         err_msg = str(e.orig).lower() if e.orig else ""
 
         # Foreign Key Constraint Failure (Non-existent parent folder)
-        if "foreign key" in err_msg or "folder_id" in err_msg:
+        if "foreign key" in err_msg or "parent'_id" in err_msg:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Parent folder with ID {folder.parent_id} does not exist."

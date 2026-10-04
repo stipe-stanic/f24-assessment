@@ -39,16 +39,28 @@ function FileExplorer() {
         } catch (err) {
             if (isStillValid()) {
                 console.error("Failed to load contents", err);
-                setError(getErrorMessage(err, "Failed to load folder contents."));
-                setFolders([]);
-                setFiles([]);
+
+                // Handle attempts to access non-existent/deleted folders (e.g. via browser back/forward button)
+                const isNotFound =
+                    err.status === 404 ||
+                    err.response?.status === 404 ||
+                    err.message?.toLowerCase().includes("not found");
+                if (isNotFound && targetFolderId !== null) {
+                    setError("The requested folder no longer exists.");
+                    // Replace dead route in browser history so user doesn't get stuck in a back-button loop
+                    navigate('/home', { replace: true });
+                } else {
+                    setError(getErrorMessage(err, "Failed to load folder contents."));
+                    setFolders([]);
+                    setFiles([]);
+                }
             }
         } finally {
             if (isStillValid()) {
                 setIsLoading(false);
             }
         }
-    }, []);
+    }, [navigate]);
 
     // Fetch data whenever currentFolder changes
     useEffect(() => {
@@ -120,6 +132,12 @@ function FileExplorer() {
         try {
             if (type === 'folder') {
                 await api.deleteFolder(id);
+
+                // If user deletes the folder currently being viewed, redirect to home
+                if (id === currentFolder) {
+                    navigate('/home', { replace: true });
+                    return;
+                }
             } else {
                 await api.deleteFile(id);
             }

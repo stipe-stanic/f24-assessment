@@ -29,7 +29,13 @@ api.interceptors.response.use(
             error.message ||
             "An unexpected network error occurred.";
 
-        return Promise.reject(new Error(typeof message === 'object' ? JSON.stringify(message) : message));
+        const customError = new Error(typeof message === 'object' ? JSON.stringify(message) : message);
+
+        // Preserve HTTP status and response for component-level checks
+        customError.status = error.response?.status;
+        customError.response = error.response;
+
+        return Promise.reject(customError);
     }
 );
 
