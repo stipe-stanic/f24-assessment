@@ -20,8 +20,21 @@ function FileExplorer() {
     const [error, setError] = useState(null);
 
     // Helper to safely extract error messages across different error structures
-    const getErrorMessage = (err, fallback) =>
-        err.response?.data?.detail || err.message || fallback;
+    const getErrorMessage = (err, fallbackMessage = "An error occurred.") => {
+    const detail = err.response?.data?.detail;
+
+    if (detail) {
+        if (Array.isArray(detail) && detail.length > 0) {
+            return detail[0].msg;
+        }
+
+        if (typeof detail === "string") {
+            return detail;
+        }
+    }
+
+    return err.message || fallbackMessage;
+};
 
     const loadContents = useCallback(async (targetFolderId, isStillValid = () => true) => {
         setIsLoading(true);

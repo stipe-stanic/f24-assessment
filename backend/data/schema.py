@@ -4,7 +4,7 @@ from typing import Optional
 
 
 class ItemCreate(BaseModel):
-    name: str = Field(..., min_length=1, max_length=255)
+    name: str = Field(..., min_length=1, max_length=255, pattern=r"^[a-zA-Z0-9 _.-]+$")
 
     @field_validator("name")
     @classmethod
@@ -13,13 +13,8 @@ class ItemCreate(BaseModel):
         if len(v) == 0:
             raise ValueError("Name cannot be empty or consist only of spaces")
 
-        illegal_chars = r'[<>:"/\\|?*\x00]'
-        if re.search(illegal_chars, v):
-            raise ValueError("Name contains invalid characters")
-
         if v.strip('.') == "":
             raise ValueError("Name cannot consist only of periods")
-
         return v
 
 
