@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import SearchBar from './components/SearchBar';
 import CreateItem from './components/CreateItem';
 import FileList from './components/FileList';
 import * as api from './services/api';
 
-export default function App() {
-    const [currentFolder, setCurrentFolder] = useState(null); // null = root level
-    const [history, setHistory] = useState([]);
+function FileExplorer() {
+    // Extract folderId from URL
+    const { folderId } = useParams();
+    const navigate = useNavigate();
+
+    const currentFolder = folderId ? parseInt(folderId, 10) : null;
+
     const [folders, setFolders] = useState([]);
     const [files, setFiles] = useState([]);
 
@@ -18,14 +23,13 @@ export default function App() {
     const getErrorMessage = (err, fallback) =>
         err.response?.data?.detail || err.message || fallback;
 
-    // Use isStillValid to prevent race conditions.
-    const loadContents = useCallback(async (folderId, isStillValid = () => true) => {
+    const loadContents = useCallback(async (targetFolderId, isStillValid = () => true) => {
         setIsLoading(true);
         setError(null);
         try {
             const [folderRes, fileRes] = await Promise.all([
-                api.getFolders(folderId),
-                api.getFiles(folderId)
+                api.getFolders(targetFolderId),
+                api.getFiles(targetFolderId)
             ]);
             if (isStillValid()) {
                 // Safeguard against non-array response payloads
@@ -46,9 +50,9 @@ export default function App() {
         }
     }, []);
 
+    // Fetch data whenever currentFolder changes
     useEffect(() => {
         let ignore = false;
-
         loadContents(currentFolder, () => !ignore);
 
         return () => {
@@ -58,18 +62,19 @@ export default function App() {
         };
     }, [currentFolder, loadContents]);
 
-    const handleNavigate = (folderId) => {
+    const handleNavigate = (id) => {
         setError(null);
-        setHistory([...history, currentFolder]);
-        setCurrentFolder(folderId);
+        navigate(`/folders/${id}`);
     };
 
     const handleGoBack = () => {
         setError(null);
-        const newHistory = [...history];
-        const prevFolder = newHistory.pop();
-        setHistory(newHistory);
-        setCurrentFolder(prevFolder !== undefined ? prevFolder : null);
+        navigate(-1); // Triggers standard browser back navigation
+    };
+
+    const handleGoToRoot = () => {
+        setError(null);
+        navigate('/home');
     };
 
     const handleCreateFolder = async (rawName) => {
@@ -148,12 +153,19 @@ export default function App() {
             <div style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#f0f0f0' }}>
                 <button
                     onClick={handleGoBack}
-                    disabled={history.length === 0 || isLoading}
-                    style={{ marginRight: '15px' }}
+                    style={{ marginRight: '10px' }}
+                    disabled={isLoading}
                 >
                     Back
                 </button>
-                <span>Path: {currentFolder === null ? 'Root' : `Folder ID: ${currentFolder}`}</span>
+                <button
+                    onClick={handleGoToRoot}
+                    disabled={currentFolder === null || isLoading}
+                    style={{ marginRight: '15px' }}
+                >
+                    Home
+                </button>
+                <span>Path: {currentFolder === null ? 'Home' : `Folder ID: ${currentFolder}`}</span>
             </div>
 
             <CreateItem
@@ -176,5 +188,22 @@ export default function App() {
                 />
             )}
         </div>
+    );
+}
+
+export default function App() {
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path="/" element={<Navigate to="/home" replace />} />
+                <Route path="/home" element={<FileExplorer />} />
+
+                {/* Subfolder view */}
+                <Route path="/folders/:folderId" element={<FileExplorer />} />
+
+                {/* Catch-all fallback */}
+                <Route path="*" element={<Navigate to="/home" replace />} />
+            </Routes>
+        </BrowserRouter>
     );
 }

@@ -32,12 +32,12 @@ services:
     environment:
       # Note: Host is 'db', matching the Postgres service name above
       - DATABASE_URL=${DATABASE_URL}
-      - PYTHONPATH=/app
+      - PYTHONPATH=/app/backend
     depends_on:
       db:
         condition: service_healthy
     volumes:
-      - ./backend:/app  # Enables live code reload in development
+      - ./backend:/app/backend  # Enables live code reload in development
     command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload  # Enables hot reload
 
   frontend:
